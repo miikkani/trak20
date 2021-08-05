@@ -1,0 +1,9 @@
+*.zip
+a.out
+compile.sh
+material/*
+material
+material/
+*.txt
+vgcore*
+wc
