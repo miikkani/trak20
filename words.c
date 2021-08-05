@@ -10,7 +10,7 @@
 #include <stdlib.h>
 
 
-#define MAX 40 /* max length of word */
+#define MAX 100 /* max length of word */
 #define TOPNUMBER 30
 
 struct node {
@@ -35,16 +35,18 @@ void swap(struct node*[], int, int);
 /* main program */
 int main(int argc, char* argv[])
 {
-    int c,len,words;
+    int c,len,words, longest;
     FILE* file;
     struct node* root;
     char word[MAX];
+    char lword[MAX];
     words = 0;
     len = 0;
     int i = 0;
+    longest = 0; // keep track of longest word
     
     if((file = fopen(*++argv, "r")) == NULL){
-        printf("nullval");
+        printf("Usage: program <filename>\n");
         return 1;
     }
 
@@ -58,6 +60,21 @@ int main(int argc, char* argv[])
             word[i] = toupper(c);
             i++;
             len++;
+            if(len > longest){
+                longest = len;
+                for(int i=0;i<longest;++i) {
+                    lword[i] = word[i];
+                }
+                lword[i] = '\0';
+            }
+            if(i > MAX) {
+                printf("Word limit reached[%d].",MAX);
+                printf("Aborting...\n");
+                fclose(file);
+                return 1;
+            }
+
+            
         } else {
             if(len != 0){
                 word[i] = '\0';
@@ -73,7 +90,7 @@ int main(int argc, char* argv[])
         }
     } while((c = getc(file)) != EOF);
     fclose(file);
-    tprint(root);
+    //tprint(root);
     int nodes = treesize(root);
 
     struct node** array;
@@ -91,6 +108,8 @@ int main(int argc, char* argv[])
     printf(" ~:   FILE: %s\n", argv[0]);
     printf(" ~: UNIQUE: %d\n", nodes);
     printf(" ~:  TOTAL: %d\n", words);
+    printf(" ~:LONGEST: %2d LETTERS \n", longest);
+    printf(" ~:   -->> %s \n", lword);
     printf(" .-.-.-.-.-.-.-.-.-.-.-.-.-.\n");
     printf(" .-.-.-.-.-.-.-.-.-.-.-.-.-.\n");
     //printf("\n");
@@ -152,7 +171,7 @@ void tprint(struct node* root)
 {
     if(root != NULL) {
         tprint(root->left);
-//        printf("%4d %s\n",root->count,root->word);
+        printf("%4d %s\n",root->count,root->word);
         tprint(root->right);
     }
 
