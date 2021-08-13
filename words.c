@@ -86,6 +86,8 @@ int main(int argc, char* argv[])
         return 1;
     }
 
+    printf("\nfile read in ");
+    clock_t begin = clock();
     /* collect and count words */
     root = NULL;
     c = getc(file);
@@ -125,15 +127,24 @@ int main(int argc, char* argv[])
     } while((c = getc(file)) != EOF);
     fclose(file);
     
+    clock_t end = clock();
+    double time_spent = ((double)(end - begin)) * 1000 / CLOCKS_PER_SEC;
+    printf("%.0f ms\n", time_spent);
     /*
     get node count, move node pointers
     to array and sort it.
     */
+    printf("counted nodes in ");
+    begin = clock();
     nodes = treesize(root);
+    end = clock();
+    time_spent = ((double)(end - begin)) * 1000 / CLOCKS_PER_SEC;
+    printf("%.0f ms (%d nodes)\n", time_spent, nodes);
 
-    printf("nodes: %d\n",nodes);
     // printf("size of array: %d bytes\n", nodes * sizeof(struct node));
 
+    printf("allocated and initalized memory for arrray in ");
+    begin = clock();
     array = (struct node**) malloc(nodes * sizeof(struct node));
     if(array == NULL) {
         printf("toobig\n");
@@ -142,16 +153,24 @@ int main(int argc, char* argv[])
     for(ia = 0; ia < nodes; ++ia) {
         array[ia] = NULL;
     }
+    end = clock();
+    time_spent = ((double)(end - begin)) * 1000 / CLOCKS_PER_SEC;
+    printf("%.0f ms \n", time_spent);
 
 
+    printf("copy to array in ");
+    begin = clock();
     toarray(root, array, 0);
+    end = clock();
+    time_spent = ((double)(end - begin)) * 1000 / CLOCKS_PER_SEC;
+    printf("%.0f ms\n", time_spent);
 
 
-    printf("1. sort\n");
-    clock_t begin = clock();
+    printf("\n1. sort\n");
+    begin = clock();
     three_pikasort(array, 0, nodes-1);
-    clock_t end = clock();
-    double time_spent = ((double)(end - begin)) * 1000 / CLOCKS_PER_SEC;
+    end = clock();
+    time_spent = ((double)(end - begin)) * 1000 / CLOCKS_PER_SEC;
     printf("calls: %d depth: %d swaps: %d\n", calls, depth, swaps);
     printf("sorting time: %.0f ms\n", time_spent);
 
@@ -164,7 +183,7 @@ int main(int argc, char* argv[])
     end = clock();
     time_spent = ((double)(end - begin)) * 1000 / CLOCKS_PER_SEC;
     printf("calls: %d depth: %d swaps: %d\n", calls, depth, swaps);
-    printf("sorting time: %.0f ms\n", time_spent);
+    printf("sorting time: %.0f ms\n\n", time_spent);
 /*
     printf("\ncalls: %d depth: %d swaps: %d\n", calls, depth, swaps);
     calls = 0;
