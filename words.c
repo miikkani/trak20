@@ -23,6 +23,9 @@
 
 #define MAX 100 /* max length of word */
 #define TOPNUMBER 20 /* length of list printed */
+// #define DEBUG
+#define SIMPLE
+// #define MORE
 
 /* functions */
 struct node* add(struct node*, char*);
@@ -32,6 +35,7 @@ int toarray(struct node*, struct node*[], int);
 void pikasort(struct node*[], int, int);
 void three_pikasort(struct node*[], int, int);
 void swap(struct node*[], int , int);
+void insertionSort(struct node* [], int n);
 
 
 void recur(int x) {
@@ -48,10 +52,12 @@ struct node {
     int count;
 };
 
+// global variables for sorting statistics
 int recursion = 0;
 int depth = 0;
 int calls = 0;
 int swaps = 0;
+double ratio = 0.0;
 
 /* main program */
 int main(int argc, char* argv[])
@@ -77,8 +83,10 @@ int main(int argc, char* argv[])
     
 
 
+    #ifdef PRETTY
     printf(" .-.-.-.-.-.-.-.-.-.-.-.-.-.\n");
     printf(" PROCESSING...");
+    #endif
 
     /* open file from argument */
     if((file = fopen(*++argv, "r")) == NULL){
@@ -86,7 +94,7 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    printf("\nfile read in ");
+    printf("\nreading file and counting words...");
     clock_t begin = clock();
     /* collect and count words */
     root = NULL;
@@ -130,11 +138,16 @@ int main(int argc, char* argv[])
     clock_t end = clock();
     double time_spent = ((double)(end - begin)) * 1000 / CLOCKS_PER_SEC;
     printf("%.0f ms\n", time_spent);
+
+    //stats for BST procedure
+    printf("time %.2f ms\n", time_spent);
+    printf("calls: %d depth: %d swaps: %d\n", calls, depth, swaps);
+
     /*
-    get node count, move node pointers
+    get node count, copy node pointers
     to array and sort it.
     */
-    printf("counted nodes in ");
+    printf("counted unique words from tree in ");
     begin = clock();
     nodes = treesize(root);
     end = clock();
@@ -165,25 +178,36 @@ int main(int argc, char* argv[])
     time_spent = ((double)(end - begin)) * 1000 / CLOCKS_PER_SEC;
     printf("%.0f ms\n", time_spent);
 
-
-    printf("\n1. sort\n");
-    begin = clock();
-    three_pikasort(array, 0, nodes-1);
-    end = clock();
-    time_spent = ((double)(end - begin)) * 1000 / CLOCKS_PER_SEC;
-    printf("calls: %d depth: %d swaps: %d\n", calls, depth, swaps);
-    printf("sorting time: %.0f ms\n", time_spent);
-
-    calls = 0;
     depth = 0;
-    swaps = 0;
-    printf("\n2. sort for already sorted list\n");
+    recursion = 0;
+    calls = 0;
+
+    // printf("\n1. sort\n");
+    // printf("\ninsertion sort..\n");
+    printf("\nsorting...");
     begin = clock();
     three_pikasort(array, 0, nodes-1);
+    // pikasort(array, 0, nodes-1);
+    // insertionSort(array, nodes-1);
     end = clock();
     time_spent = ((double)(end - begin)) * 1000 / CLOCKS_PER_SEC;
+    ratio = (double) swaps / (double) nodes;
+    printf("time %.2f ms\n", time_spent);
+    printf("ratio: %.2f * n\n",ratio);
     printf("calls: %d depth: %d swaps: %d\n", calls, depth, swaps);
-    printf("sorting time: %.0f ms\n\n", time_spent);
+
+    // calls = 0;
+    // depth = 0;
+    // swaps = 0;
+    // printf("\n2. sort for already sorted list\n");
+    // begin = clock();
+    // // // three_pikasort(array, 0, nodes-1);
+    // // // pikasort(array, 0, nodes-1);
+    // insertionSort(array, nodes-1);
+    // end = clock();
+    // time_spent = ((double)(end - begin)) * 1000 / CLOCKS_PER_SEC;
+    // printf("calls: %d depth: %d swaps: %d\n", calls, depth, swaps);
+    // printf("sorting time: %.0f ms\n\n", time_spent);
 /*
     printf("\ncalls: %d depth: %d swaps: %d\n", calls, depth, swaps);
     calls = 0;
@@ -199,6 +223,7 @@ int main(int argc, char* argv[])
 
     // printf("\ncalls: %d depth: %d swaps: %d\n", calls, depth, swaps);
     /* print results */
+    #ifdef PRETTY
     // printf(" .-.-.-.-.-.-.-.-.-.-.-.-.-.\n");
     printf("\r .-` WORDS.c (TRAK2021)  `-.\n");
     printf(" .-.-.-.-.-.-.-.-.-.-.-.-.-.\n");
@@ -216,12 +241,21 @@ int main(int argc, char* argv[])
 
     toplist = nodes - TOPNUMBER;
     if(toplist <= 0) toplist = 0;
-// toplist = 0;
+
     j = 1;
     for(i = nodes-1; i >= toplist; --i, j++) {
         printf("%3d. %-15s%6d\n",j, array[i]->word,array[i]->count);
     }
 
+    // for(i = 0; i < nodes; i++ ) {
+    //     printf("%3d. %-15s%6d\n",i, array[i]->word,array[i]->count);
+    // }
+    #endif
+    #ifdef SIMPLE
+    printf("file: %s\n", argv[0]);
+    printf("unique: %d total: %d\n", nodes, words);
+
+    #endif
 // tprint(root);
 
     return 0;
@@ -231,6 +265,9 @@ int main(int argc, char* argv[])
 /* add new node to tree */
 struct node* add(struct node* node, char* word)
 {
+    #ifdef SIMPLE
+    calls++;
+    #endif
     char* temp;
     if(node == NULL) {
         node = (struct node*) malloc(sizeof(struct node));
@@ -240,12 +277,45 @@ struct node* add(struct node* node, char* word)
         node->count = 1;
         node->left = node->right = NULL;
     } else if(strcmp(word, node->word) == 0) {
+        // if(recursion > depth) depth = recursion;
+        // ++recursion;
         node->count++;
     } else if(strcmp(word, node->word) < 0) {
+        if(recursion > depth) depth = recursion;
+        ++recursion;
+        #ifdef MORE
+        for(int i = 1;i<recursion;++i) {
+            printf("-");
+        }
+        printf("L(%d)\n",recursion);
+        #endif
         node->left = add(node->left, word);
+        recursion--;
+        #ifdef MORE
+        for(int i = 1;i<recursion;++i) {
+            printf("-");
+        }
+        printf("L(%d)\n",recursion);
+        #endif
     } else {
+        if(recursion > depth) depth = recursion;
+        ++recursion;
+        #ifdef MORE
+        for(int i = 1;i<recursion;++i) {
+            printf("-");
+        }
+        printf("R(%d)\n",recursion);
+        #endif
         node->right = add(node->right, word);
+        recursion--;
+        #ifdef MORE
+        for(int i = 1;i<recursion;++i) {
+            printf("-");
+        }
+        printf("R(%d)\n",recursion);
+        #endif
    }
+    // recursion--;
     return node;
 }
 
@@ -287,11 +357,13 @@ void pikasort(struct node* arr[], int left, int right)
     // i = 0;
     // pivot = 0;
     ++calls;
+
+    if(left >= right) { return; } // base case, 1 or less elements
+
     if(recursion > depth) depth = recursion;
     ++recursion;
 
-    if(left >= right) return;
-     swap(arr, left, (left+right)/2); 
+    swap(arr, left, (left+right)/2); 
     pivot = left;
     for(i=left+1; i <= right; i++) {
         a = arr[i]->count;
@@ -310,10 +382,10 @@ void pikasort(struct node* arr[], int left, int right)
 void three_pikasort(struct node* arr[] , int left, int right)
 {
     calls++;
-    if(recursion > depth) depth = recursion;
-    ++recursion;
 
     if(right <= left) return;
+    if(recursion > depth) depth = recursion;
+    ++recursion;
 
     /* three-way partition() */
     int i,j,p,q;
@@ -346,12 +418,36 @@ void three_pikasort(struct node* arr[] , int left, int right)
     for(k = right -1; k > q; k--, i++)
         swap(arr,i,k);
     /* partition() ends */
-
     /* sort partitions */
     three_pikasort(arr, left, j);
     three_pikasort(arr, i, right);
 
     --recursion;
+}
+
+/* Function to sort an array using insertion sort*/
+void insertionSort(struct node* arr[], int n)
+{
+    calls++;
+    int i,j;
+    struct node* key = NULL;
+    for (i = 1; i <= n ; i++) {
+        // key = arr[i]->count;
+        key = arr[i];
+        j = i - 1;
+ 
+        /* Move elements of arr[0..i-1], that are
+          greater than key, to one position ahead
+          of their current position */
+        while (j >= 0 && arr[j]->count > key->count) {
+            swap(arr, j+1, j);
+            // arr[j + 1]->count = arr[j]->count;
+            j = j - 1;
+        }
+        arr[j+1] = key;
+        // swap(arr,j+1,key);
+        // arr[j + 1]->count = key;
+    }
 }
 
 /* swap() implementation for quicksort */
